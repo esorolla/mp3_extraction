@@ -26,38 +26,10 @@ def get_chapters_links(input_url, root_link):
     Output:
         links --> (set)(str) storing all the links of the chapters of the book.
     """
-    if not input_url or len(input_url) < 1:
-        raise Exception('INFO: Invalid Input')
-    try:
-        website_content = requests.get(input_url.strip()).text
-    except AssertionError as error:
-        print(error)
-        check_internet = requests.get('https://google.com').status_code
-        if check_internet != requests.codes.ok:
-            raise ConnectionError('ERROR: Check internet connection.')
-    else:
-        if len(website_content) == 0:
-            raise Exception('INFO: Website was not retrieved!')
-
-        _soup = BeautifulSoup(website_content, features='html.parser')
-
-        internal_links = set()
-
-        # We search for the internal links:
-        for line in _soup.find_all('a'):
-            link = line.get('href')
-            if not link:
-                continue
-            if link.startswith('http'):
-                continue
-            else:
-                internal_links.add(link)
-
-        # Keeps links whose address includes the name of the requested author
-        links = [link for link in internal_links if root_link in link]
-        return links
-    finally:
-        pass
+    internal_links = get_links(input_url)[0]
+    # Keeps links whose address includes the name of the requested author
+    links = [link for link in internal_links if root_link in link]
+    return links
 
 
 def get_mp3_links(mp3_url):
@@ -124,6 +96,7 @@ def download_mp3_files(url, links, file_path, parent_dir):
                 new_mp3_link = get_mp3_links(new_link)
 
                 if len(new_mp3_link) == 0:
+                    print(f'new_mp3_link: {new_mp3_link}')
                     logfile = parent_dir+'\log.txt'
                     now = datetime.now() # current date and time
                     date_time = now.strftime("%d/%m/%Y, %H:%M:%S")
@@ -151,7 +124,7 @@ def download_mp3_files(url, links, file_path, parent_dir):
             with open(logfile, 'a+', encoding='utf-8') as f:
                 f.write('Logged time: ')
                 f.write(date_time)
-                f.write('WARNING: More than one mp3 file has been found on: "')
+                f.write('WARNING: More than one mp3 file have been found on: "')
                 f.write(link)
                 f.write('"\n')
                 f.write('Very likely the website of this link has several')
@@ -184,7 +157,7 @@ def filter_links(links):
 
     # Removes links with '#', '/', '-en.' or '-fr.' so that we avoid links
     # different from authors' books or books in English or French.
-    regex = re.compile(r'([#/]|(-en\.)|(-fr.))')
+    regex = re.compile(r'([#/]|(-en.)|(-fr.))')
     clean_links = [link for link in links if not regex.search(link)]
     return clean_links
 
@@ -228,7 +201,6 @@ def get_links(url):
             else:
                 internal_links.add(link)
 
-        internal_links = filter_links(internal_links)
         return [internal_links, external_links]
     finally:
         pass
@@ -242,7 +214,8 @@ def set_variables(web_root, author_keywords):
     ---------------------------------------------------------------------
     Input:
         webroot --> (str) storing the web address of the web root.
-        author_keywords --> (str) storing the list of keywords defining the authors.
+        author_keywords --> (str) storing the list of keywords defining the
+                                  authors on the website.
     Output:
         parent_dir --> (str) absolute path where this script is located.
         user_input_urls --> (list)(str) list with the web addresses of the
@@ -320,6 +293,7 @@ def main():
     for url in tqdm(user_input_urls, position=0, desc='url', leave=True,
                     colour='green', ncols=80):
         links = get_links(url)[0]
+        links = filter_links(links)
         folder = author_keywords[user_input_urls.index(url)]
         file_path = os.path.join(parent_dir, folder)
         os.makedirs(file_path, exist_ok=True)
