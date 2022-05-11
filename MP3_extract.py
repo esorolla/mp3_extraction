@@ -234,7 +234,7 @@ def get_links(url):
         pass
 
 
-def set_variables(web_root, authors):
+def set_variables(web_root, author_keywords):
     """
     This function sets the parent directory, and the list of URLs hosting
     the websites with the books from the author list, joining the web_root
@@ -242,7 +242,7 @@ def set_variables(web_root, authors):
     ---------------------------------------------------------------------
     Input:
         webroot --> (str) storing the web address of the web root.
-        authors --> (str) storing the list of keywords defining the authors.
+        author_keywords --> (str) storing the list of keywords defining the authors.
     Output:
         parent_dir --> (str) absolute path where this script is located.
         user_input_urls --> (list)(str) list with the web addresses of the
@@ -251,7 +251,7 @@ def set_variables(web_root, authors):
     abspath = os.path.abspath(__file__)
     parent_dir = os.path.dirname(abspath)
     os.chdir(parent_dir)
-    user_input_urls = [web_root + elem + '/' for elem in authors]
+    user_input_urls = [web_root + elem + '/' for elem in author_keywords]
 
     return parent_dir, user_input_urls
 
@@ -313,14 +313,14 @@ def main():
         Download the mp3 files automatically.
     """
     web_root = 'https://albalearning.com/audiolibros/'
-    authors = ['benedetti', 'benavente', 'hesse']  # author list manually defined
-    #authors = get_author_keywords(web_root)
-    print(f'authors list: {authors}')
-    parent_dir, user_input_urls = set_variables(web_root, authors)
+    author_keywords = ['benedetti', 'benavente', 'hesse']  # author list manually defined
+    #author_keywords = get_author_keywords(web_root)
+    print(f'authors list: {author_keywords}')
+    parent_dir, user_input_urls = set_variables(web_root, author_keywords)
     for url in tqdm(user_input_urls, position=0, desc='url', leave=True,
                     colour='green', ncols=80):
         links = get_links(url)[0]
-        folder = authors[user_input_urls.index(url)]
+        folder = author_keywords[user_input_urls.index(url)]
         file_path = os.path.join(parent_dir, folder)
         os.makedirs(file_path, exist_ok=True)
         download_mp3_files(url, links, file_path, parent_dir)
